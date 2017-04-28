@@ -33,9 +33,9 @@ def images(request):
 
 
 def test_compare_with_atomic_diff(images):
-    (image1, image2) = images
+    (original_image, ocex_image) = images
 
-    diff_str = subprocess.check_output(["atomic", "diff", "--json", image1, image2])
+    diff_str = subprocess.check_output(["atomic", "diff", "--json", original_image, ocex_image])
     diff_json = json.loads(diff_str)
 
     # Remove items from files_differ if the reason is only time
@@ -48,12 +48,12 @@ def test_compare_with_atomic_diff(images):
                 new_files_differ.append(diff_file)
         assert new_files_differ == []
 
-    assert diff_json[image1]['unique_files'] == []
-    assert diff_json[image2]['unique_files'] == []
+    assert diff_json[original_image]['unique_files'] == []
+    assert diff_json[ocex_image]['unique_files'] == []
 
 
 def test_run_command_in_container(images):
-    (_, image2) = images
+    (_, ocex_image) = images
 
-    exit_code = subprocess.call(["docker", "run", "--rm", "-i", image2])
+    exit_code = subprocess.call(["docker", "run", "--rm", "-i", ocex_image])
     assert exit_code == 0
