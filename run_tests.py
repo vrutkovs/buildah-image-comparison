@@ -23,7 +23,8 @@ def build_via_docker_api(directory):
 
     image_name = "test/%s:dockerapi" % directory
     full_path = os.path.join(test_dir, directory)
-    subprocess.call(["docker", "build", "-t", image_name, full_path])
+    exit_code = subprocess.call(["docker", "build", "-t", image_name, full_path])
+    assert exit_code == 0
     return image_name
 
 
@@ -32,7 +33,8 @@ def build_via_ocexdockerbuild(directory):
 
     image_name = "test/%s:ocexdockerbuild" % directory
     full_path = os.path.join(test_dir, directory)
-    subprocess.call(["oc", "ex", "dockerbuild", full_path, image_name])
+    exit_code = subprocess.call(["oc", "ex", "dockerbuild", full_path, image_name])
+    assert exit_code == 0
     return image_name
 
 
