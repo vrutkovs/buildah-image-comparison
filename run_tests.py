@@ -72,15 +72,33 @@ def compare_with_atomic_diff(image1, image2):
     log.info("atomic diff test - PASS")
 
 
+def run_test_command_for_container(image):
+    log.info("Starting a container from %s" % image)
+
+    exit_code = subprocess.call(["docker", "run", "--rm", "-ti", image])
+    assert exit_code == 0
+    log.info("test command for %s - PASS" % image)
+
+
 def run_test(directory):
     dockerapi_image = build_via_docker_api(directory)
-    ocexdockerbuild = build_via_ocexdockerbuild(directory)
-    compare_with_atomic_diff(dockerapi_image, ocexdockerbuild)
+    ocexdockerbuild_image = build_via_ocexdockerbuild(directory)
+
+    compare_with_atomic_diff(dockerapi_image, ocexdockerbuild_image)
+    run_test_command_for_container(dockerapi_image)
+    run_test_command_for_container(ocexdockerbuild_image)
+
     log.info("Images are identical")
 
+
+failed_tests = []
 for _, dirs, _ in os.walk(test_dir, topdown=False):
     for directory in dirs:
         try:
             run_test(directory)
         except:
             log.exception("Error running test in %s" % directory)
+            failed_tests.append(directory)
+
+if failed_tests:
+    raise RuntimeError("Failed tests: %s" % failed_tests)
