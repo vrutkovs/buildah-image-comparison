@@ -43,10 +43,8 @@ def get_atomic_diff_json(image1, image2):
     return json.loads(diff_str)
 
 
-def run_test(directory):
-    dockerapi_image = build_via_docker_api(directory)
-    ocexdockerbuild = build_via_ocexdockerbuild(directory)
-    diff_json = get_atomic_diff_json(dockerapi_image, ocexdockerbuild)
+def compare_with_atomic_diff(image1, image2):
+    diff_json = get_atomic_diff_json(image1, image2)
 
     log.info("Removing different files if the only reason is time")
     # Remove items from files_differ if the reason is only time
@@ -63,12 +61,19 @@ def run_test(directory):
     if diff_json['files_differ'] != []:
         raise RuntimeError("Images have different files: %s" % diff_json['files_differ'])
 
-    if diff_json[dockerapi_image]['unique_files']:
+    if diff_json[image1]['unique_files']:
         raise RuntimeError("Docker API image has unique files: %s" %
-                           diff_json[dockerapi_image]['unique_files'])
-    if diff_json[ocexdockerbuild]['unique_files']:
+                           diff_json[image1]['unique_files'])
+    if diff_json[image2]['unique_files']:
         raise RuntimeError("oc ex dockerbuild image has unique files: %s" %
-                           diff_json[ocexdockerbuild]['unique_files'])
+                           diff_json[image2]['unique_files'])
+    log.info("atomic diff test - PASS")
+
+
+def run_test(directory):
+    dockerapi_image = build_via_docker_api(directory)
+    ocexdockerbuild = build_via_ocexdockerbuild(directory)
+    compare_with_atomic_diff(dockerapi_image, ocexdockerbuild)
     log.info("Images are identical")
 
 for _, dirs, _ in os.walk(test_dir, topdown=False):
