@@ -11,7 +11,10 @@ test_dir = os.path.join(dir_path, "tests")
 def prefill_dir_list():
     dir_list = []
     for _, dirs, _ in os.walk(test_dir, topdown=False):
-        dir_list += [x for x in dirs]
+        for x in dirs:
+            dockerfile_path = os.path.join(test_dir, x, 'Dockerfile')
+            if os.path.isfile(dockerfile_path):
+                dir_list += x
     return dir_list
 
 
