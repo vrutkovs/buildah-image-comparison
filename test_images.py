@@ -10,12 +10,12 @@ test_dir = os.path.join(dir_path, "tests")
 
 def prefill_dir_list():
     dir_list = []
-    for _, dirs, _ in os.walk(test_dir, topdown=False):
+    for root, dirs, _ in os.walk(test_dir, topdown=False):
         for x in dirs:
-            dockerfile_path = os.path.join(test_dir, x, 'Dockerfile')
+            dockerfile_path = os.path.join(root, x, 'Dockerfile')
             if os.path.isfile(dockerfile_path):
-                dir_list += x
-    return dir_list
+                dir_list.append(x)
+    return list(sorted(dir_list))
 
 
 @pytest.fixture(scope="module", params=prefill_dir_list())
