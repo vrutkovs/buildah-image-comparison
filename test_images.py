@@ -25,17 +25,22 @@ def images(request):
     exit_code = subprocess.call(["docker", "build", "-t", dockerapi_image, full_path])
     assert exit_code == 0
 
-    ocex_image_name = "test/%s:ocexdockerbuild" % request.param
+    buildah_image_name = "test/%s:buildah" % request.param
     full_path = os.path.join(test_dir, request.param)
-    exit_code = subprocess.call(["oc", "ex", "dockerbuild", full_path, ocex_image_name])
-    assert exit_code == 0
-    return (dockerapi_image, ocex_image_name)
+    build_exit_code = subprocess.call(["buildah", "--storage-driver", "overlay2",
+                                       "bud", "--tag", buildah_image_name, full_path])
+    assert build_exit_code == 0
+    push_exit_code = subprocess.call(["buildah", "--storage-driver", "overlay2",
+                                      "push", buildah_image_name,
+                                      "docker-daemon:{}".format(buildah_image_name)])
+    assert push_exit_code == 0
+    return (dockerapi_image, buildah_image_name)
 
 
 def test_compare_with_atomic_diff(images):
-    (original_image, ocex_image) = images
+    (original_image, buildah_image) = images
 
-    diff_str = subprocess.check_output(["atomic", "diff", "--json", original_image, ocex_image])
+    diff_str = subprocess.check_output(["atomic", "diff", "--json", original_image, buildah_image])
     diff_json = json.loads(diff_str)
 
     # Remove items from files_differ if the reason is only time
@@ -49,11 +54,11 @@ def test_compare_with_atomic_diff(images):
         assert new_files_differ == []
 
     assert diff_json[original_image]['unique_files'] == []
-    assert diff_json[ocex_image]['unique_files'] == []
+    assert diff_json[buildah_image]['unique_files'] == []
 
 
 def test_run_command_in_container(images):
-    (_, ocex_image) = images
+    (_, buildah_image) = images
 
-    exit_code = subprocess.call(["docker", "run", "--rm", "-i", ocex_image])
+    exit_code = subprocess.call(["docker", "run", "--rm", "-i", buildah_image])
     assert exit_code == 0
