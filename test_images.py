@@ -47,7 +47,11 @@ def test_compare_with_atomic_diff(images):
     if diff_json['files_differ']:
         new_files_differ = []
         for diff_file in diff_json['files_differ']:
+            # Ignore time diffs
             if 'reasons' in diff_file and diff_file['reasons'] == ['time']:
+                continue
+            # Buildah makes images with /proc and /sys with different mode :/
+            elif diff_file['reasons'] == ['mode', 'time'] and diff_file['path'] in ['proc', 'sys']:
                 continue
             else:
                 new_files_differ.append(diff_file)
